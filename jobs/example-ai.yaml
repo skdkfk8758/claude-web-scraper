@@ -1,0 +1,11 @@
+name: example-ai-extract
+url: https://news.ycombinator.com
+
+extract: "각 게시물의 제목, 링크 URL, 점수, 작성자를 추출해줘"
+
+output:
+  format: json
+  path: ./data/hn-ai-extracted.json
+
+stealth: "off"
+retry: 2

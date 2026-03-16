@@ -1,0 +1,12 @@
+name: oliveyoung-best-reviews
+url: https://www.oliveyoung.co.kr/store/main/getBestList.do?dispCatNo=900000100100001
+
+extract: "베스트 상품 목록에서 각 상품의 이름, 가격, 별점, 리뷰 개수를 추출해줘"
+
+output:
+  format: json
+  path: ./data/oliveyoung-best_reviews.json
+
+stealth: "auto"
+retry: 3
+screenshot_on_error: true

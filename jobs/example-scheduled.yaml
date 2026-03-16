@@ -1,0 +1,15 @@
+name: daily-news-monitor
+url: https://news.ycombinator.com
+
+fields:
+  title: ".titleline a::text"
+  link: ".titleline a::attr(href)"
+  score: ".score::text"
+
+output:
+  format: json
+  path: ./data/hn-daily.json
+
+stealth: "off"
+retry: 3
+schedule: "0 9 * * *"

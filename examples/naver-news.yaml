@@ -1,0 +1,11 @@
+name: naver-news-headlines
+url: https://news.naver.com
+
+extract: "메인 페이지의 주요 뉴스 헤드라인, 카테고리, 링크 URL을 추출해줘"
+
+output:
+  format: json
+  path: ./data/naver-news-headlines.json
+
+stealth: "auto"
+retry: 2

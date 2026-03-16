@@ -1,0 +1,14 @@
+name: example-simple
+url: https://news.ycombinator.com
+
+fields:
+  title: ".titleline a::text"
+  link: ".titleline a::attr(href)"
+  score: ".score::text"
+
+output:
+  format: json
+  path: ./data/hn-posts.json
+
+retry: 3
+stealth: "off"

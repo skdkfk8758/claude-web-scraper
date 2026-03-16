@@ -1,0 +1,12 @@
+name: coupang-category-products
+url: https://www.coupang.com/np/categories/497135
+
+extract: "상품 목록에서 상품명, 가격, 별점, 리뷰 수, 배송 유형을 추출해줘"
+
+output:
+  format: json
+  path: ./data/coupang-products.json
+
+stealth: "cloudflare"
+retry: 3
+screenshot_on_error: true

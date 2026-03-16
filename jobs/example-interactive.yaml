@@ -1,0 +1,20 @@
+name: example-interactive
+url: https://quotes.toscrape.com/js/
+
+steps:
+  - action: wait
+    selector: ".quote"
+    timeout: 5000
+
+fields:
+  text: ".quote .text::text"
+  author: ".quote .author::text"
+  tags: ".quote .tag::text"
+
+output:
+  format: csv
+  path: ./data/quotes.csv
+
+stealth: "auto"
+retry: 3
+screenshot_on_error: true
