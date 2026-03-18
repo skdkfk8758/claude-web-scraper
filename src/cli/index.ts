@@ -6,6 +6,7 @@ import { runCommand } from "./run.js";
 import { scheduleCommand } from "./schedule.js";
 import { profileCommand } from "./profile.js";
 import { htmlCommand } from "./html.js";
+import { reviewCommand } from "./review.js";
 
 const program = new Command();
 
@@ -19,5 +20,6 @@ program.addCommand(runCommand);
 program.addCommand(scheduleCommand);
 program.addCommand(profileCommand);
 program.addCommand(htmlCommand);
+program.addCommand(reviewCommand);
 
 program.parse(process.argv);

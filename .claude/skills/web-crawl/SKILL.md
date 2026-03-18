@@ -1,6 +1,6 @@
 ---
 name: web-crawl
-description: 웹페이지 스크래핑 및 데이터 추출 스킬. URL에서 데이터를 가져오고 구조화된 형태로 추출한다. 웹사이트 데이터 수집, 크롤링, 스크래핑, 페이지 분석, 가격 비교, 상품 목록 수집 등 웹에서 정보를 가져와야 할 때 사용. Use when user mentions 'scrape', 'crawl', 'extract from website', 'get data from URL', '크롤링', '스크래핑', '웹에서 가져와', '사이트에서 추출', '페이지 분석'.
+description: 웹페이지 스크래핑 및 데이터 추출 스킬. URL에서 데이터를 가져오고 구조화된 형태로 추출한다. 웹사이트 데이터 수집, 크롤링, 스크래핑, 페이지 분석, 가격 비교, 상품 목록 수집 등 웹에서 정보를 가져와야 할 때 사용. 쿠팡 상품 리뷰 수집도 지원. Use when user mentions 'scrape', 'crawl', 'extract from website', 'get data from URL', '크롤링', '스크래핑', '웹에서 가져와', '사이트에서 추출', '페이지 분석', '쿠팡', '리뷰', 'coupang', 'review'.
 user-invocable: true
 allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Agent
 argument-hint: "<URL> [추출 요청 또는 서브커맨드]"
@@ -65,7 +65,18 @@ argument-hint: "<URL> [추출 요청 또는 서브커맨드]"
 ```
 - URL만 제공, 추출 요청 없음 → 탐색 모드
 
-### Mode 7: Claude 자동 호출
+### Mode 7: 쿠팡 리뷰 수집 (review 서브커맨드)
+```
+/web-crawl review https://www.coupang.com/vp/products/1234567
+/web-crawl review https://www.coupang.com/vp/products/1234567 --pages 1-5
+/web-crawl 쿠팡 리뷰 가져와 https://www.coupang.com/vp/products/1234567
+/web-crawl 쿠팡 1234567 리뷰 전체
+```
+- 첫 번째 인자가 `review`이거나, 인자에 쿠팡 URL + "리뷰" 키워드 감지 → 리뷰 모드
+- 쿠팡 URL에서 상품 ID를 자동 파싱
+- 지원 URL 형식: 데스크톱(`/vp/products/`), 모바일(`/vm/products/`), 리뷰 직접 URL
+
+### Mode 8: Claude 자동 호출
 - 대화 중 웹 데이터가 필요하다고 판단될 때 Claude가 자동 호출
 - 사용자의 의도에서 URL과 추출 대상을 파악
 
@@ -213,6 +224,87 @@ node dist/cli/index.js schedule <subcommand> [args...] 2>&1
 ```
 
 결과를 사용자에게 포맷팅하여 출력.
+
+## 리뷰 모드 (Mode 7)
+
+쿠팡 상품 리뷰를 수집한다. CLI의 `review` 서브커맨드를 사용한다.
+
+### 인자 파싱
+
+사용자 입력에서 다음을 추출한다:
+- **URL 또는 상품 ID**: 쿠팡 URL에서 자동 파싱
+- **페이지 범위**: "전체", "1~5페이지", "3페이지만" → `--pages` 옵션으로 변환
+- **별점 필터**: "1점 리뷰만", "낮은 점수" → `--rating` 옵션
+- **정렬**: "최신순", "도움순" → `--sort` 옵션
+
+### 실행
+
+```bash
+# 기본 (첫 페이지)
+node dist/cli/index.js review "<URL>" 2>&1
+
+# 페이지 범위 지정
+node dist/cli/index.js review "<URL>" --pages 1-5 2>&1
+
+# 전체 리뷰
+node dist/cli/index.js review "<URL>" --pages all 2>&1
+
+# 별점 필터 + CSV
+node dist/cli/index.js review "<URL>" --pages 1-10 --rating 1,2 --format csv 2>&1
+
+# 로그인 프로필 사용
+node dist/cli/index.js review "<URL>" --profile coupang 2>&1
+
+# 딜레이 조정 (봇 차단 대응)
+node dist/cli/index.js review "<URL>" --delay 5-10 2>&1
+```
+
+### 결과 출력
+
+리뷰 수집 결과를 마크다운 테이블로 보여준다:
+
+```
+## 쿠팡 리뷰 수집 결과
+
+📦 상품: [상품명]
+⭐ 평점: 4.5 (총 1,234건)
+📄 수집: 25건 (1~5 페이지)
+
+| # | 별점 | 작성자 | 날짜 | 리뷰 내용 (요약) |
+|---|------|--------|------|------------------|
+| 1 | ⭐5 | user1 | 2024-01-15 | 배송이 빠르고 품질... |
+| 2 | ⭐4 | user2 | 2024-01-14 | 가격 대비 괜찮은... |
+| ... | | | | |
+
+> 전체 25건 중 5건 미리보기
+
+💾 저장: data/coupang-reviews-1234567.json
+```
+
+### 비로그인 실패 시 안내
+
+리뷰가 0건이고 프로필 미사용 시:
+
+```
+⚠️ 리뷰를 가져올 수 없습니다. 로그인이 필요할 수 있습니다.
+
+1. 프로필 생성:
+   webcrawl profile login coupang --url https://www.coupang.com/login
+
+2. 프로필로 재실행:
+   webcrawl review <URL> --profile coupang
+```
+
+### 후속 제안
+
+```
+다음 작업:
+  [1] 더 많은 페이지 수집 (--pages 6-10)
+  [2] 별점 필터링 (--rating 1,2)
+  [3] CSV로 내보내기
+  [4] 다른 상품 리뷰 수집
+  [5] 완료
+```
 
 ## Stealth 전략 자동 선택
 
