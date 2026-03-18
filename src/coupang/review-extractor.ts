@@ -30,9 +30,13 @@ export function extractReviews(html: string, productId: string): CoupangReview[]
     const reviewId = $el.attr("id") ?? $el.data("review-id")?.toString() ?? "";
 
     const ratingEl = $el.find(".sdp-review__article__list__info__product-info__star-orange");
-    const ratingWidth = ratingEl.attr("style") ?? "";
-    const widthMatch = ratingWidth.match(/width:\s*([\d.]+)%/);
-    const rating = widthMatch ? Math.round(parseFloat(widthMatch[1]) / 20) : 0;
+    const dataRating = ratingEl.attr("data-rating") ?? ratingEl.data("rating")?.toString();
+    let rating = dataRating ? parseInt(dataRating, 10) : 0;
+    if (!rating) {
+      const ratingWidth = ratingEl.attr("style") ?? "";
+      const widthMatch = ratingWidth.match(/width:\s*([\d.]+)%/);
+      rating = widthMatch ? Math.round(parseFloat(widthMatch[1]) / 20) : 0;
+    }
 
     const username = $el
       .find(".sdp-review__article__list__info__user__name")
