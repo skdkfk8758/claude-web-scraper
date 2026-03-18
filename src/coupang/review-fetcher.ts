@@ -175,12 +175,39 @@ const output = {
   needsLogin: false,
 };
 
-// Chrome 실행 경로 탐색
+// Chrome 실행 경로 탐색 (macOS / Windows / Linux)
 function findChrome() {
-  const paths = [
-    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-    "/Applications/Chromium.app/Contents/MacOS/Chromium",
-  ];
+  const platform = process.platform;
+  const paths = [];
+
+  if (platform === "darwin") {
+    paths.push(
+      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "/Applications/Chromium.app/Contents/MacOS/Chromium",
+    );
+  } else if (platform === "win32") {
+    const programFiles = process.env.PROGRAMFILES || "C:\\\\Program Files";
+    const programFilesX86 = process.env["PROGRAMFILES(X86)"] || "C:\\\\Program Files (x86)";
+    const localAppData = process.env.LOCALAPPDATA || "";
+    paths.push(
+      programFiles + "\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe",
+      programFilesX86 + "\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe",
+      localAppData + "\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe",
+    );
+  } else {
+    paths.push(
+      "/usr/bin/google-chrome",
+      "/usr/bin/google-chrome-stable",
+      "/usr/bin/chromium-browser",
+      "/usr/bin/chromium",
+      "/snap/bin/chromium",
+    );
+  }
+
+  // 환경변수로 Chrome 경로 직접 지정 가능
+  const envChrome = process.env.CHROME_PATH;
+  if (envChrome && existsSync(envChrome)) return envChrome;
+
   for (const p of paths) {
     if (existsSync(p)) return p;
   }
