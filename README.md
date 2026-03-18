@@ -68,6 +68,9 @@ webcrawl fetch "https://news.ycombinator.com" \
 webcrawl fetch "https://news.ycombinator.com" \
   -e "각 게시물의 제목, 링크, 점수를 추출해줘"
 
+# 쿠팡 상품 리뷰 수집
+webcrawl review "https://www.coupang.com/vp/products/1234567" --pages 1-5
+
 # YAML 설정 파일 실행
 webcrawl run jobs/example-simple.yaml
 
@@ -80,6 +83,7 @@ webcrawl html "https://example.com"
 ```
 /web-crawl https://news.ycombinator.com 상위 게시물 제목과 점수 추출해줘
 /web-crawl https://shop.com --fields "name:.product-name::text" "price:.price::text"
+/web-crawl review https://www.coupang.com/vp/products/1234567 --pages 1-5
 /web-crawl run jobs/example-simple.yaml
 ```
 
@@ -200,6 +204,40 @@ webcrawl profile list                              # 저장된 프로필 목록
 webcrawl profile remove <name>                     # 프로필 삭제
 ```
 
+### `review` - 쿠팡 상품 리뷰 수집
+
+```bash
+webcrawl review <url> [options]
+
+옵션:
+  --pages <range>      페이지 범위 (예: 1-5, all, 기본: 1)
+  --rating <stars>     별점 필터 (예: 1,2,5)
+  --sort <order>       정렬: latest|rating|helpful (기본: latest)
+  --delay <range>      요청 딜레이 초 (예: 3-6, 기본: 3-6)
+  --format <json|csv>  출력 형식 (기본: json)
+  -o, --output <path>  출력 파일 경로
+  --profile <name>     로그인 프로필 사용
+  --timeout <ms>       타임아웃 (기본: 30000)
+```
+
+**사용 예시:**
+
+```bash
+# 첫 페이지 리뷰 (기본)
+webcrawl review "https://www.coupang.com/vp/products/1234567"
+
+# 1~5 페이지, CSV 저장
+webcrawl review "https://www.coupang.com/vp/products/1234567" --pages 1-5 --format csv
+
+# 1-2점 리뷰만 필터링
+webcrawl review "https://www.coupang.com/vp/products/1234567" --pages 1-10 --rating 1,2
+
+# 전체 리뷰 (최대 300페이지)
+webcrawl review "https://www.coupang.com/vp/products/1234567" --pages all
+```
+
+> **참고**: 쿠팡은 Akamai Bot Protection을 사용하며, 시스템에 Google Chrome이 설치되어 있어야 합니다. headed Chrome + CDP 연결 방식으로 봇 탐지를 우회합니다.
+
 ### `schedule` - 정기 실행 관리
 
 ```bash
@@ -290,8 +328,9 @@ schedule: "0 9 * * *"
 ```
 web-crawler/
 ├── src/
-│   ├── cli/              # CLI 명령어 (fetch, run, schedule, profile, html)
+│   ├── cli/              # CLI 명령어 (fetch, run, schedule, profile, html, review)
 │   ├── core/             # 설정 로더, 오케스트레이터
+│   ├── coupang/          # 쿠팡 리뷰 크롤러 (URL 파서, 리뷰 추출, CDP fetcher)
 │   ├── fetcher/          # Playwright / Scrapling 페치 전략
 │   ├── extractor/        # 셀렉터 추출, AI 추출 (HTML 정리)
 │   ├── output/           # JSON / CSV 출력
