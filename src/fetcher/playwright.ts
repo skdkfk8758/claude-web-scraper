@@ -1,7 +1,6 @@
 import type { Step } from "../core/config-loader.js";
 import type { CookieData } from "../profile/manager.js";
 import { spawnWithInput } from "../utils/spawn.js";
-import { logger } from "../error/reporter.js";
 
 interface PlaywrightResult {
   html: string;
@@ -9,15 +8,19 @@ interface PlaywrightResult {
   screenshot?: Buffer;
 }
 
+export interface PlaywrightOptions {
+  steps?: Step[];
+  cookies?: CookieData[];
+  timeout?: number;
+  screenshotOnError?: boolean;
+  headless?: boolean;
+  stealth?: boolean;
+  extraHeaders?: Record<string, string>;
+}
+
 export async function fetchWithPlaywright(
   url: string,
-  options: {
-    steps?: Step[];
-    cookies?: CookieData[];
-    timeout?: number;
-    screenshotOnError?: boolean;
-    headless?: boolean;
-  } = {}
+  options: PlaywrightOptions = {}
 ): Promise<PlaywrightResult> {
   const script = buildPlaywrightScript(url, options);
   const { stdout } = await spawnWithInput("node", ["--input-type=module"], script, {
@@ -35,12 +38,7 @@ export async function fetchWithPlaywright(
 
 function buildPlaywrightScript(
   url: string,
-  options: {
-    steps?: Step[];
-    cookies?: CookieData[];
-    timeout?: number;
-    headless?: boolean;
-  }
+  options: PlaywrightOptions
 ): string {
   const stepsCode = (options.steps ?? [])
     .map((step) => {
@@ -73,8 +71,20 @@ function buildPlaywrightScript(
     (s) => s.action === "scroll" && s.direction === "infinite"
   );
 
+  const useStealth = options.stealth !== false;
+
+  const importCode = useStealth
+    ? `import { chromium } from "playwright-extra";
+import StealthPlugin from "puppeteer-extra-plugin-stealth";
+chromium.use(StealthPlugin());`
+    : `import { chromium } from "playwright";`;
+
+  const extraHeadersCode = options.extraHeaders
+    ? `await page.setExtraHTTPHeaders(${JSON.stringify(options.extraHeaders)});`
+    : "";
+
   return `
-import { chromium } from "playwright";
+${importCode}
 
 ${
   needsAutoScroll
@@ -104,6 +114,9 @@ async function autoScroll(page) {
 const browser = await chromium.launch({ headless: ${options.headless !== false} });
 const context = await browser.newContext({
   userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+  locale: "ko-KR",
+  timezoneId: "Asia/Seoul",
+  viewport: { width: 1920, height: 1080 },
 });
 
 ${
@@ -113,6 +126,7 @@ ${
 }
 
 const page = await context.newPage();
+${extraHeadersCode}
 await page.goto(${JSON.stringify(url)}, { waitUntil: "networkidle", timeout: ${options.timeout ?? 30000} });
 
 ${stepsCode}
